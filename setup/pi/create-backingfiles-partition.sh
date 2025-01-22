@@ -9,10 +9,10 @@ function log_progress () {
   echo "create-backingfiles-partition: $1"
 }
 
-# install XFS tools if needed
-if ! hash mkfs.xfs
+# install BTRFS tools if needed
+if ! hash mkfs.btrfs
 then
-  apt-get -y --force-yes install xfsprogs
+  apt-get -y --force-yes install btrfs-progs
 fi
 
 function partition_prefix_for {
@@ -38,7 +38,7 @@ function update_fstab {
     log_progress "backingfiles already defined in /etc/fstab. Not modifying /etc/fstab."
   elif [ "$BACKINGFILES_MOUNTPOINT" != "none" ]
   then
-    echo "LABEL=backingfiles $BACKINGFILES_MOUNTPOINT xfs auto,rw,noatime 0 2" >> /etc/fstab
+    echo "LABEL=backingfiles $BACKINGFILES_MOUNTPOINT btrfs auto,rw,noatime 0 2" >> /etc/fstab
   fi
   if grep -q 'LABEL=mutable' /etc/fstab
   then
@@ -72,7 +72,7 @@ then
     log_progress "Formatting new partitions..."
     # Force creation of filesystems even if previous filesystem appears to exist
     mkfs.ext4 -F -L mutable "$P1"
-    mkfs.xfs -f -m reflink=1 -L backingfiles "$P2"
+    mkfs.btrfs -f -L backingfiles "$P2"
   fi
 
   update_fstab
@@ -99,13 +99,13 @@ else
   readonly BACKINGFILES_DEVICE="${BOOT_DEVICE_PARTITION_PREFIX}$((LAST_PART_NUM + 1))"
 fi
 
-# If the backingfiles partition follows the root partition, is type xfs,
+# If the backingfiles partition follows the root partition, is type btrfs,
 # and is in turn followed by the mutable partition, type ext4, then return early.
 if [ /dev/disk/by-label/backingfiles -ef "${BACKINGFILES_DEVICE}" ] && \
     [ /dev/disk/by-label/mutable -ef "${MUTABLE_DEVICE}" ] && \
     blkid "${MUTABLE_DEVICE}" | grep -q 'TYPE="ext4"'
 then
-  if blkid "${BACKINGFILES_DEVICE}" | grep -q 'TYPE="xfs"'
+  if blkid "${BACKINGFILES_DEVICE}" | grep -q 'TYPE="btrfs"'
   then
     # assume these were either created previously by the setup scripts,
     # or manually by the user, and that they're big enough
@@ -114,8 +114,8 @@ then
     return &> /dev/null || exit 0
   elif blkid "${BACKINGFILES_DEVICE}" | grep -q 'TYPE="ext4"'
   then
-    # special case: convert existing backingfiles from ext4 to xfs
-    log_progress "reformatting existing backingfiles as xfs"
+    # special case: convert existing backingfiles from ext4 to btrfs
+    log_progress "reformatting existing backingfiles as btrfs"
     killall archiveloop || true
     /root/bin/disable_gadget.sh || true
     if mount | grep -qw "/mnt/cam"
@@ -134,12 +134,12 @@ then
         exit 1
       fi
     fi
-    mkfs.xfs -f -m reflink=1 -L backingfiles "${BACKINGFILES_DEVICE}"
+    mkfs.btrfs -f -L backingfiles "${BACKINGFILES_DEVICE}"
 
     # update /etc/fstab
-    sed -i 's/LABEL=backingfiles .*/LABEL=backingfiles \/backingfiles xfs auto,rw,noatime 0 2/' /etc/fstab
+    sed -i 's/LABEL=backingfiles .*/LABEL=backingfiles \/backingfiles btrfs auto,rw,noatime 0 2/' /etc/fstab
     mount /backingfiles
-    log_progress "backingfiles converted to xfs and mounted"
+    log_progress "backingfiles converted to btrfs and mounted"
     return &> /dev/null || exit 0
   fi
 fi
@@ -203,7 +203,7 @@ fi
 
 log_progress "Formatting new partitions..."
 # Force creation of filesystems even if previous filesystem appears to exist
-mkfs.xfs -f -m reflink=1 -L backingfiles "${BACKINGFILES_DEVICE}"
+mkfs.btrfs -f -L backingfiles "${BACKINGFILES_DEVICE}"
 mkfs.ext4 -F -N "$NUM_MUTABLE_INODES" -L mutable "${MUTABLE_DEVICE}"
 
 update_fstab
