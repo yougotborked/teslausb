@@ -45,25 +45,25 @@ function check_udc () {
   fi
 }
 
-function check_xfs () {
-  setup_progress "Checking XFS support"
-  # install XFS tools if needed
-  if ! hash mkfs.xfs
+function check_btrfs () {
+  setup_progress "Checking BTRFS support"
+  # install BTRFS tools if needed
+  if ! hash mkfs.btrfs
   then
-    apt-get -y --force-yes install xfsprogs
+    apt-get -y --force-yes install btrfs-progs
   fi
-  truncate -s 1GB /tmp/xfs.img
-  mkfs.xfs -m reflink=1 -f /tmp/xfs.img > /dev/null
-  mkdir -p /tmp/xfsmnt
-  if ! mount /tmp/xfs.img /tmp/xfsmnt
+  truncate -s 1GB /tmp/btrfs.img
+  mkfs.btrfs  -f /tmp/btrfs.img > /dev/null
+  mkdir -p /tmp/btrfsmnt
+  if ! mount /tmp/btrfs.img /tmp/btrfsmnt
   then
-    setup_progress "STOP: xfs does not support required features"
+    setup_progress "STOP: btrfs does not support required features"
     exit 1
   fi
 
-  umount /tmp/xfsmnt
-  rm -rf /tmp/xfs.img /tmp/xfsmnt
-  setup_progress "XFS supported"
+  umount /tmp/btrfsmnt
+  rm -rf /tmp/btrfs.img /tmp/btrfsmnt
+  setup_progress "BTRFS supported"
 }
 
 function check_available_space () {
