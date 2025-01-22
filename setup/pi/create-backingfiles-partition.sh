@@ -72,7 +72,7 @@ then
     log_progress "Formatting new partitions..."
     # Force creation of filesystems even if previous filesystem appears to exist
     mkfs.ext4 -F -L mutable "$P1"
-    mkfs.xfs -f -m reflink=1 -L backingfiles "$P2"
+    mkfs.btrfs -f -L backingfiles "$P2"
   fi
 
   update_fstab
