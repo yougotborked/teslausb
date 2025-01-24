@@ -136,10 +136,10 @@ function check_available_space_usb () {
   local drive_size
   drive_size=$(blockdev --getsize64 "$DATA_DRIVE")
 
-  # Require at least 64GB drive size, or 59 GiB.
-  if [ "$drive_size" -lt  $(( (1<<30) * 59)) ]
+  # Require at least 64GB drive size, or 57.2 GiB.
+  if [ "$drive_size" -lt  $(( (1<<30) * 57)) ]
   then
-    setup_progress "STOP: The USB drive is too small: $(( drive_size / 1024 / 1024 / 1024 ))GB available. Expected at least 64GB"
+    setup_progress "STOP: The USB drive is too small: $(( drive_size / 1024 / 1024 / 1024 ))GB available. Expected at least 61GB"
     setup_progress "$(parted "$DATA_DRIVE" print)"
     exit 1
   fi
